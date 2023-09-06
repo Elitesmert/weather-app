@@ -86,7 +86,7 @@ export default function App() {
                 <Image
                   width={50}
                   alt='NextUI hero Image'
-                  src={`/public/weather-icons/fill/all/${weatherIcons()}.svg`}
+                  src={`./public/weather-icons/fill/all/${weatherIcons()}.svg`}
                 ></Image>
               </div>
             ) : null}
@@ -107,21 +107,21 @@ export default function App() {
           <div className='w-full items-center flex flex-col'>
             <h6>Feels Like</h6>
             <p className='flex items-center'>
-              <Image className='h-10' src={`/public/weather-icons/fill/all/thermometer.svg`} />
+              <Image className='h-10' src={`./public/weather-icons/fill/all/thermometer.svg`} />
               {weatherAll.main ? weatherAll.main.feels_like : null}
             </p>
           </div>
           <div className='w-full items-center flex flex-col border-x-2'>
             <h6>Humidity</h6>
             <p className='flex items-center'>
-              <Image className='h-10' src={`/public/weather-icons/fill/all/humidity.svg`} />
+              <Image className='h-10' src={`./public/weather-icons/fill/all/humidity.svg`} />
               {weatherAll.main ? weatherAll.main.humidity : null}
             </p>
           </div>
           <div className='w-full items-center flex flex-col'>
             <h6>Wind Speed</h6>
             <p className='flex items-center'>
-              <Image className='h-10' src={`/public/weather-icons/fill/all/windsock.svg`} />
+              <Image className='h-10' src={`./public/weather-icons/fill/all/windsock.svg`} />
               {weatherAll.wind ? weatherAll.wind.speed : null}
             </p>
           </div>
