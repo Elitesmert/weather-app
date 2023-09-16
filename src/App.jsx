@@ -1,23 +1,56 @@
 import React, {useEffect, useState, useRef} from 'react'
 import axios from 'axios'
-import {Card, CardBody, CardFooter, CardHeader, Image, Input, Skeleton} from '@nextui-org/react'
+import {
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  Image,
+  Skeleton,
+  Accordion,
+  AccordionItem,
+} from '@nextui-org/react'
 import {IoLocationOutline} from 'react-icons/io5'
-import {AiOutlineSearch} from 'react-icons/ai'
+import {AsyncPaginate} from 'react-select-async-paginate'
+import {geoApiOptions, GEO_API_URL} from './api/geoApi'
+import {OPENWEATHER_URL, OPENWEATHER_API, OPENWEATHER_FORECAST_URL} from './api/openweather'
+import CardFooterContent from './component/CardFooterContent'
 
 export default function App() {
   const [weatherAll, setWeatherAll] = useState({})
-  const [weather4Day, setWeather4Day] = useState({})
+  const [weatherForecast, setWeatherForecast] = useState({})
   const [isLoaded, setIsLoaded] = useState(true)
-  const [location, setLocation] = useState('')
   const [bg, setBg] = useState('weather')
+  const [search, setSearch] = useState(null)
 
-  let api = 'db6c2a00de491a7370fcb41710e0d55b'
-  const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${api}`
-  const url_4day = `http://api.openweathermap.org/data/2.5/forecast?q=${location}&appid=${api}`
+  const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
   const bgImage = `https://source.unsplash.com/1920x1080/?${bg}`
+
+  const dayInAWeek = new Date().getDay()
+  const forecastDays = WEEK_DAYS.slice(dayInAWeek, WEEK_DAYS.length).concat(
+    WEEK_DAYS.slice(0, dayInAWeek)
+  )
 
   const weatherIcons = () => {
     switch (weatherAll.weather[0].description) {
+      case 'scattered clouds':
+        return 'partly-cloudy-day'
+      case 'broken clouds':
+        return 'partly-cloudy-day'
+      case 'clear sky':
+        return 'clear-day'
+      case 'few clouds':
+        return 'cloudy'
+      case 'overcast clouds':
+        return 'overcast'
+      case 'haze':
+        return 'haze'
+      default:
+        return 'not-available'
+    }
+  }
+  const weatherForecastIcons = (icon) => {
+    switch (icon) {
       case 'scattered clouds':
         return 'partly-cloudy-day'
       case 'broken clouds':
@@ -32,60 +65,77 @@ export default function App() {
         return 'not-available'
     }
   }
-  const searchLocation = (e) => {
-    if (e.key === 'Enter') {
-      setBg(location)
 
-      // First API
-      axios
-        .get(url)
-        .then((res) => {
-          // Handle response
-          setWeatherAll(res.data)
-          setIsLoaded(true)
-        })
-        .catch((err) => {
-          // console.error(err)
-        })
-
-      // Second API
-      axios
-        .get(url_4day)
-        .then((res) => {
-          setWeather4Day(res.data)
-        })
-        .catch((err) => {
-          // console.error(err)
-        })
-      setLocation('')
-    }
+  const loadOptions = (inputValue) => {
+    return fetch(
+      `${GEO_API_URL}/cities?minPopulation=250000&limit=10&namePrefix=${inputValue}`,
+      geoApiOptions
+    )
+      .then((res) => res.json())
+      .then((res) => {
+        return {
+          options: res.data.map((city) => {
+            return {
+              value: `${city.latitude} ${city.longitude}`,
+              label: `${city.name}, ${city.countryCode}`,
+            }
+          }),
+        }
+      })
   }
-  console.log(weather4Day)
+
+  const handleOnChange = async (searchCity) => {
+    setSearch(searchCity)
+    const [lat, lon] = searchCity.value.split(' ')
+    const [city, country] = searchCity.label.split(', ')
+
+    // OpenWeather API
+    await axios
+      .get(`${OPENWEATHER_URL}/weather?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_API}`)
+      .then((res) => {
+        // Handle response
+        setWeatherAll(res.data)
+        setIsLoaded(true)
+      })
+      .catch((err) => {
+        // console.error(err)
+      })
+
+    // OpenWeather Forecast API
+    await axios
+      .get(
+        `${OPENWEATHER_FORECAST_URL}/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_API}`
+      )
+      .then((res) => {
+        setWeatherForecast(res.data)
+      })
+      .catch((err) => {
+        // console.error(err)
+      })
+    const lowerCase = (text) => {
+      const words = text.toLowerCase().split(' ')
+      return words.join('')
+    }
+
+    setBg(lowerCase(city))
+  }
 
   return (
     <Skeleton
       isLoaded={isLoaded}
       style={{backgroundImage: `url(${bgImage})`}}
-      className='relative bg-no-repeat bg-cover w-full h-screen text-white flex justify-center items-center'
+      className='relative bg-no-repeat bg-cover w-full min-h-screen max-h-fit text-white flex justify-center items-center'
     >
-      <div className='absolute bg-black/60 h-screen w-full top-0 left-0'></div>
-      <Input
-        classNames={{
-          base: 'max-w-full sm:max-w-96 h-10',
-          mainWrapper: 'h-full',
-          input: 'text-small',
-          inputWrapper:
-            'h-full font-normal text-default-500 bg-default-400/20 dark:bg-default-500/20',
-        }}
-        value={location}
-        onChange={(e) => {
-          setLocation(e.target.value)
-        }}
-        onKeyPress={searchLocation}
-        placeholder='Enter a city name'
-        size='sm'
-        type='search'
+      <div className='absolute bg-black/60 h-full w-full top-0 left-0 z-0'></div>
+      <AsyncPaginate
+        className='text-black z-20'
+        placeholder='Search for city'
+        debounceTimeout={600}
+        value={search}
+        loadOptions={loadOptions}
+        onChange={handleOnChange}
       />
+
       <Card className='w-96 mt-5'>
         <CardHeader className='pb-0 pt-2 px-4 flex-col items-center'>
           <div className='flex items-center w-full'>
@@ -106,38 +156,70 @@ export default function App() {
         </CardHeader>
         <CardBody>
           <div className='flex-col flex gap-5'>
-            <p className='font-bold text-7xl flex'>
+            <div className='font-bold text-7xl flex'>
               {weatherAll.main ? weatherAll.main.temp.toFixed() : null}
               <span className='text-4xl'>°C</span>
-            </p>
-            <p className='font-bold capitalize'>
+            </div>
+            <div className='font-bold capitalize'>
               {weatherAll.weather ? weatherAll.weather[0].description : null}
-            </p>
+            </div>
           </div>
         </CardBody>
         <CardFooter className='flex justify-around border-t-2 p-0'>
-          <div className='w-full items-center flex flex-col'>
-            <h6>Feels Like</h6>
-            <p className='flex items-center'>
-              <Image className='h-10' src={`/weather-icons/fill/all/thermometer.svg`} />
-              {weatherAll.main ? weatherAll.main.feels_like : null}
-            </p>
-          </div>
-          <div className='w-full items-center flex flex-col border-x-2'>
-            <h6>Humidity</h6>
-            <p className='flex items-center'>
-              <Image className='h-10' src={`/weather-icons/fill/all/humidity.svg`} />
-              {weatherAll.main ? weatherAll.main.humidity : null}
-            </p>
-          </div>
-          <div className='w-full items-center flex flex-col'>
-            <h6>Wind Speed</h6>
-            <p className='flex items-center'>
-              <Image className='h-10' src={`/weather-icons/fill/all/windsock.svg`} />
-              {weatherAll.wind ? weatherAll.wind.speed : null}
-            </p>
-          </div>
+          <CardFooterContent
+            src={`/weather-icons/fill/all/thermometer.svg`}
+            title='Feels Like'
+            content={weatherAll.main ? weatherAll.main.feels_like : null}
+          />
+          <CardFooterContent
+            variant='middle'
+            src={`/weather-icons/fill/all/humidity.svg`}
+            title='Humidity'
+            content={weatherAll.main ? weatherAll.main.humidity : null}
+          />
+          <CardFooterContent
+            src={`/weather-icons/fill/all/windsock.svg`}
+            title='Wind Speed'
+            content={weatherAll.wind ? weatherAll.wind.speed : null}
+          />
         </CardFooter>
+      </Card>
+      <Card className='bg-transparent shadow-none overflow-visible mt-5'>
+        <Accordion variant='splitted'>
+          {weatherForecast.list
+            ? weatherForecast.list.splice(0, 7).map((day, index) => {
+                let icon = day.weather[0].description
+                const capitalized = (text) => {
+                  const words = text.toLowerCase().split(' ')
+                  const capitalizedWords = words.map((word) => {
+                    return word.charAt(0).toUpperCase() + word.slice(1)
+                  })
+                  return capitalizedWords.join(' ')
+                }
+                return (
+                  <AccordionItem
+                    key={index}
+                    aria-label={forecastDays[index]}
+                    title={`${forecastDays[index]} ${capitalized(icon)}`}
+                    subtitle={`Max: ${Math.round(day.main.temp_max)}°C / Min: ${Math.round(
+                      day.main.temp_min
+                    )}°C`}
+                    startContent={
+                      <Image
+                        className='h-10'
+                        src={`/weather-icons/fill/all/${weatherForecastIcons(icon)}.svg`}
+                      />
+                    }
+                  >
+                    <label>{day.weather[0].description}</label>
+                    <label>
+                      Max:{Math.round(day.main.temp_max)}°C / Min:{Math.round(day.main.temp_min)}°C
+                    </label>
+                  </AccordionItem>
+                )
+              })
+            : null}
+        </Accordion>
       </Card>
     </Skeleton>
   )
