@@ -6,26 +6,28 @@ import {AiOutlineSearch} from 'react-icons/ai'
 
 export default function App() {
   const [weatherAll, setWeatherAll] = useState({})
+  const [weather4Day, setWeather4Day] = useState({})
   const [isLoaded, setIsLoaded] = useState(true)
   const [location, setLocation] = useState('')
   const [bg, setBg] = useState('weather')
 
   let api = 'db6c2a00de491a7370fcb41710e0d55b'
   const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${api}`
+  const url_4day = `http://api.openweathermap.org/data/2.5/forecast?q=${location}&appid=${api}`
   const bgImage = `https://source.unsplash.com/1920x1080/?${bg}`
 
   const weatherIcons = () => {
     switch (weatherAll.weather[0].description) {
       case 'scattered clouds':
         return 'partly-cloudy-day'
-      case 'Clear':
+      case 'broken clouds':
+        return 'partly-cloudy-day'
+      case 'clear sky':
         return 'clear-day'
-      case 'Rain':
-        return 'rain'
-      case 'Snow':
-        return 'snow'
-      case 'Thunderstorm':
-        return 'thunderstorm'
+      case 'few clouds':
+        return 'cloudy'
+      case 'overcast clouds':
+        return 'overcast'
       default:
         return 'not-available'
     }
@@ -33,6 +35,8 @@ export default function App() {
   const searchLocation = (e) => {
     if (e.key === 'Enter') {
       setBg(location)
+
+      // First API
       axios
         .get(url)
         .then((res) => {
@@ -41,12 +45,22 @@ export default function App() {
           setIsLoaded(true)
         })
         .catch((err) => {
-          // Handle errors
-          console.error(err)
+          // console.error(err)
+        })
+
+      // Second API
+      axios
+        .get(url_4day)
+        .then((res) => {
+          setWeather4Day(res.data)
+        })
+        .catch((err) => {
+          // console.error(err)
         })
       setLocation('')
     }
   }
+  console.log(weather4Day)
 
   return (
     <Skeleton
@@ -70,10 +84,9 @@ export default function App() {
         onKeyPress={searchLocation}
         placeholder='Enter a city name'
         size='sm'
-        endContent={<AiOutlineSearch size={18} />}
         type='search'
       />
-      <Card className='w-96'>
+      <Card className='w-96 mt-5'>
         <CardHeader className='pb-0 pt-2 px-4 flex-col items-center'>
           <div className='flex items-center w-full'>
             <p className='uppercase font-bold ml-auto flex gap-2 items-center'>
