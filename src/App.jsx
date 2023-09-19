@@ -218,17 +218,17 @@ export default function App() {
                       <CardFooterContent
                         src={`/weather-icons/fill/all/thermometer.svg`}
                         title='Feels Like'
-                        content={weatherAll.main ? weatherAll.main.feels_like : null}
+                        content={day.main.feels_like.toFixed()}
                       />
                       <CardFooterContent
                         src={`/weather-icons/fill/all/humidity.svg`}
                         title='Humidity'
-                        content={weatherAll.main ? weatherAll.main.humidity : null}
+                        content={day.main.humidity}
                       />
                       <CardFooterContent
                         src={`/weather-icons/fill/all/windsock.svg`}
                         title='Wind Speed'
-                        content={weatherAll.wind ? weatherAll.wind.speed : null}
+                        content={day.wind.speed}
                       />
                     </div>
                   </AccordionItem>
