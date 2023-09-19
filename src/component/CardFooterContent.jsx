@@ -7,6 +7,7 @@ const CardFooterContent = ({src, title, content, variant}) => {
     <div
       className={classNames('w-full items-center flex flex-col', {
         'border-x-2': variant === 'middle',
+        '': variant === 'none',
       })}
     >
       <h6>{title}</h6>

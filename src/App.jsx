@@ -200,7 +200,7 @@ export default function App() {
                   <AccordionItem
                     key={index}
                     aria-label={forecastDays[index]}
-                    title={`${forecastDays[index]} ${capitalized(icon)}`}
+                    title={`${forecastDays[index]}`}
                     subtitle={`Max: ${Math.round(day.main.temp_max)}°C / Min: ${Math.round(
                       day.main.temp_min
                     )}°C`}
@@ -211,10 +211,26 @@ export default function App() {
                       />
                     }
                   >
-                    <label>{day.weather[0].description}</label>
-                    <label>
-                      Max:{Math.round(day.main.temp_max)}°C / Min:{Math.round(day.main.temp_min)}°C
-                    </label>
+                    <div className='text-center border-b-1 mb-3 font-bold'>
+                      <label>{capitalized(icon)}</label>
+                    </div>
+                    <div className='flex justify-between'>
+                      <CardFooterContent
+                        src={`/weather-icons/fill/all/thermometer.svg`}
+                        title='Feels Like'
+                        content={weatherAll.main ? weatherAll.main.feels_like : null}
+                      />
+                      <CardFooterContent
+                        src={`/weather-icons/fill/all/humidity.svg`}
+                        title='Humidity'
+                        content={weatherAll.main ? weatherAll.main.humidity : null}
+                      />
+                      <CardFooterContent
+                        src={`/weather-icons/fill/all/windsock.svg`}
+                        title='Wind Speed'
+                        content={weatherAll.wind ? weatherAll.wind.speed : null}
+                      />
+                    </div>
                   </AccordionItem>
                 )
               })
